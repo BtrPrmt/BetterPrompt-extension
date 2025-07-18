@@ -13,7 +13,7 @@ const observer = new MutationObserver(() => {
         improveButton.className = 'composer-btn';
         improveButton.setAttribute('aria-label', 'promptr-improve');
         improveButton.innerHTML = `
-            <span class="ms-1.5 me-0.5">Improve ✨</span>`; 
+            <span class="ms-1.5 me-0.5">Improve ✨</span>`;
         improveButton.setAttribute('style', `
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -45,11 +45,36 @@ const observer = new MutationObserver(() => {
             cursor: pointer;`);
 
         improveButton.onclick = () => {
-            console.log('Clicked Improve button!')
             const paragraphs = promptDiv?.querySelectorAll('p') || [];
             const texts = Array.from(paragraphs).map(p => p.innerText);
-            console.log(texts);
-        };
+            let newPrompt;
+
+            const userPrompt = texts.map(item => item === '\n' ? '' : item).join('\n');
+
+            fetch('http://localhost:8080/improve', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: userPrompt
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response from server:', data['improvedPrompt']);
+
+                    newPrompt = data['improvedPrompt'];
+                    const newP = document.createElement('p');
+                    newP.innerText = newPrompt;
+
+                    paragraphs.forEach(p => p.remove());
+                    promptDiv.appendChild(newP);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
         ratingTab.onclick = () => console.log('Clicked Rating button!');
 
         footerActionsDiv.appendChild(improveButton);
