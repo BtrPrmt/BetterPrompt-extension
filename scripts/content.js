@@ -27,12 +27,11 @@ const observer = new MutationObserver(() => {
         const ratingTab = document.createElement('button');
         ratingTab.type = 'button';
         ratingTab.id = 'my-custom-button';
-        ratingTab.className = 'composer-btn';
         ratingTab.setAttribute('aria-label', 'promptr-rating');
         ratingTab.innerHTML = `
             <span class="ms-1.5 me-0.5">Rating</span>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                <circle cx="10" cy="10" r="6" />
+            <svg width="20" height="20" viewBox="0 0 20 20">
+                <circle cx="10" cy="10" r="6" fill="red"/>
             </svg>`;
         ratingTab.setAttribute('style', `
             border: 1px solid #ccc;
@@ -63,8 +62,7 @@ const observer = new MutationObserver(() => {
                 .then(response => response.json())
                 .then(data => {
                     console.log('Response from server:', data['improvedPrompt']);
-
-                    newPrompt = data['improvedPrompt'];
+                    const newPrompt = data['improvedPrompt'];
                     const newP = document.createElement('p');
                     newP.innerText = newPrompt;
 
@@ -75,7 +73,35 @@ const observer = new MutationObserver(() => {
                     console.error('Error:', error);
                 });
         }
-        ratingTab.onclick = () => console.log('Clicked Rating button!');
+        ratingTab.onclick = () => {
+            const paragraphs = promptDiv?.querySelectorAll('p') || [];
+            const texts = Array.from(paragraphs).map(p => p.innerText);
+            const userPrompt = texts.map(item => item === '\n' ? '' : item).join('\n');
+
+            fetch('http://localhost:8080/perplexity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: userPrompt
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response Rating from server:', data['promptRating']);
+                    const ratingNumber = data['promptRating'];
+                    const ratingColor = ratingNumber >= 4 ? "green" : ratingNumber <= 2 ? "red" : "yellow";
+                    ratingTab.innerHTML = `
+                        <span class="ms-1.5 me-0.5">Rating</span>
+                        <svg width="20" height="20" viewBox="0 0 20 20">
+                            <circle cx="10" cy="10" r="6" fill=${ratingColor} />
+                        </svg>`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        };
 
         footerActionsDiv.appendChild(improveButton);
         footerActionsDiv.appendChild(ratingTab);
