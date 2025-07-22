@@ -22,6 +22,7 @@ const observer = new MutationObserver(() => {
             display: flex;
             align-items: center;
             gap: 4px;
+            margin-right: 10px;
             cursor: pointer;`);
 
         const ratingTab = document.createElement('button');
